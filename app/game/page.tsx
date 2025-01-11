@@ -29,7 +29,6 @@ export default function Game() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [feedback, setFeedback] = useState<string | null>(null);
-  const [isAnimating, setIsAnimating] = useState(false);
   const [currentDifficulty, setCurrentDifficulty] = useState<Difficulty>('easy');
   const [gameStarted, setGameStarted] = useState(false);
   const [gameEnded, setGameEnded] = useState(false);
@@ -107,16 +106,16 @@ export default function Game() {
       userGuess: guessIsAI,
       actualAnswer: currentQuestion.isAI
     }]);
-    
-    setIsAnimating(true);
+
+    // Use a shorter timeout for quicker progression
     setTimeout(() => {
       if (currentIndex < selectedQuestions.length - 1) {
         setCurrentIndex(currentIndex + 1);
+        setFeedback(null);
       } else {
         // Game completed
         setGameEnded(true);
         if (score + (isCorrect ? 1 : 0) === selectedQuestions.length) {
-          // Perfect score! Trigger confetti
           confetti({
             particleCount: 100,
             spread: 70,
@@ -124,9 +123,7 @@ export default function Game() {
           });
         }
       }
-      setFeedback(null);
-      setIsAnimating(false);
-    }, 1500);
+    }, 600);
   };
 
   const getPerformanceMessage = (finalScore: number) => {
@@ -336,7 +333,7 @@ export default function Game() {
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-white to-gray-100 dark:from-gray-900 dark:to-gray-800 p-4">
-      <div className="fixed top-0 left-0 right-0 flex justify-between items-center p-4 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
+      <div className="fixed top-0 left-0 right-0 flex justify-between items-center p-4 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm z-10">
         <div>
           <div className="text-xl font-bold">
             Level: {currentDifficulty.charAt(0).toUpperCase() + currentDifficulty.slice(1)}
@@ -350,35 +347,33 @@ export default function Game() {
         </div>
       </div>
       
-      <div className={`transform transition-all duration-500 ${isAnimating ? 'scale-95 opacity-50' : 'scale-100 opacity-100'} mt-20`}>
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-4 sm:p-8 max-w-2xl w-full mx-auto">
-          <div className="min-h-[200px] flex items-center justify-center mb-8">
-            <p className="text-base sm:text-lg text-gray-700 dark:text-gray-300 leading-relaxed">
-              {currentQuestion.content}
-            </p>
-          </div>
-          
-          {feedback ? (
-            <div className="text-center text-xl font-bold mb-6 animate-bounce">
-              {feedback}
-            </div>
-          ) : (
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button
-                onClick={() => handleGuess(true)}
-                className="w-full sm:w-auto px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transform hover:scale-105 transition-all duration-200"
-              >
-                AI Generated
-              </button>
-              <button
-                onClick={() => handleGuess(false)}
-                className="w-full sm:w-auto px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transform hover:scale-105 transition-all duration-200"
-              >
-                Human Written
-              </button>
-            </div>
-          )}
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-4 sm:p-8 max-w-2xl w-full mx-auto mt-20">
+        <div className="min-h-[200px] flex items-center justify-center">
+          <p className="text-base sm:text-lg text-gray-700 dark:text-gray-300 leading-relaxed">
+            {currentQuestion.content}
+          </p>
         </div>
+        
+        {feedback ? (
+          <div className="text-center text-xl font-bold my-6">
+            {feedback}
+          </div>
+        ) : (
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
+            <button
+              onClick={() => handleGuess(true)}
+              className="w-full sm:w-auto px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transform hover:scale-105 transition-all duration-150"
+            >
+              AI Generated
+            </button>
+            <button
+              onClick={() => handleGuess(false)}
+              className="w-full sm:w-auto px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transform hover:scale-105 transition-all duration-150"
+            >
+              Human Written
+            </button>
+          </div>
+        )}
       </div>
     </main>
   );
