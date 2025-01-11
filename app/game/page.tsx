@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { texts } from '../data/texts';
+import { createGameSession, encodeGameSession } from '../utils/gameSession';
 
 type Difficulty = 'easy' | 'medium' | 'hard';
 
@@ -24,6 +25,10 @@ export default function Game() {
   const [currentDifficulty, setCurrentDifficulty] = useState<Difficulty>('easy');
   const [gameStarted, setGameStarted] = useState(false);
   const [gameEnded, setGameEnded] = useState(false);
+  const [playerName, setPlayerName] = useState('');
+  const [shareUrl, setShareUrl] = useState('');
+  const [showNameInput, setShowNameInput] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [gameStats, setGameStats] = useState<GameStats>({
     totalAttempts: 0,
     correctAnswers: 0,
@@ -114,6 +119,41 @@ export default function Game() {
 
   if (gameEnded) {
     const overallAccuracy = (gameStats.correctAnswers / gameStats.totalAttempts) * 100;
+
+    const handleShare = () => {
+      setShowNameInput(true);
+    };
+
+    const handleNameSubmit = (e: React.FormEvent) => {
+      e.preventDefault();
+      if (playerName.trim()) {
+        const session = createGameSession(
+          currentLevelTexts.map(t => t.id),
+          playerName,
+          score
+        );
+        const encoded = encodeGameSession(session);
+        const url = `${window.location.origin}/challenge/${encoded}`;
+        setShareUrl(url);
+        setShowNameInput(false);
+      }
+    };
+
+    const copyToClipboard = async () => {
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } catch (err) {
+        console.error('Failed to copy:', err);
+      }
+    };
+
+    const shareToTwitter = () => {
+      const text = `I scored ${score}/${gameStats.totalAttempts} in AI or Human? Can you beat my score?`;
+      const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(shareUrl)}`;
+      window.open(url, '_blank');
+    };
     
     return (
       <main className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-white to-gray-100 dark:from-gray-900 dark:to-gray-800 p-4">
@@ -145,34 +185,94 @@ export default function Game() {
               </div>
             </div>
             
-            <div className="flex gap-4 justify-center mt-8">
-              <button
-                onClick={() => startGame('easy')}
-                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transform hover:scale-105 transition-all duration-200"
-              >
-                Play Again
-              </button>
-              <button
-                onClick={() => {
-                  setGameStarted(false);
-                  setGameEnded(false);
-                  setScore(0);
-                  setCurrentIndex(0);
-                  setGameStats({
-                    totalAttempts: 0,
-                    correctAnswers: 0,
-                    incorrectAnswers: 0,
-                    accuracyByDifficulty: {
-                      easy: 0,
-                      medium: 0,
-                      hard: 0
-                    }
-                  });
-                }}
-                className="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transform hover:scale-105 transition-all duration-200"
-              >
-                Change Difficulty
-              </button>
+            <div className="flex flex-col gap-4">
+              {!shareUrl && !showNameInput && (
+                <button
+                  onClick={handleShare}
+                  className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transform hover:scale-105 transition-all duration-200"
+                >
+                  Challenge Friends
+                </button>
+              )}
+
+              {showNameInput && (
+                <form onSubmit={handleNameSubmit} className="space-y-4">
+                  <div>
+                    <label htmlFor="name" className="block text-sm font-medium mb-2">
+                      Enter your name:
+                    </label>
+                    <input
+                      type="text"
+                      id="name"
+                      value={playerName}
+                      onChange={(e) => setPlayerName(e.target.value)}
+                      className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      required
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transform hover:scale-105 transition-all duration-200"
+                  >
+                    Generate Challenge Link
+                  </button>
+                </form>
+              )}
+
+              {shareUrl && (
+                <div className="space-y-4">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={shareUrl}
+                      readOnly
+                      className="flex-1 px-4 py-2 rounded-lg border border-gray-300 bg-gray-50"
+                    />
+                    <button
+                      onClick={copyToClipboard}
+                      className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors duration-200"
+                    >
+                      {copied ? 'Copied!' : 'Copy'}
+                    </button>
+                  </div>
+                  <button
+                    onClick={shareToTwitter}
+                    className="w-full px-6 py-3 bg-[#1DA1F2] text-white rounded-lg hover:bg-[#1a8cd8] transform hover:scale-105 transition-all duration-200"
+                  >
+                    Share on Twitter
+                  </button>
+                </div>
+              )}
+
+              <div className="flex gap-4 justify-center mt-4">
+                <button
+                  onClick={() => startGame('easy')}
+                  className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transform hover:scale-105 transition-all duration-200"
+                >
+                  Play Again
+                </button>
+                <button
+                  onClick={() => {
+                    setGameStarted(false);
+                    setGameEnded(false);
+                    setScore(0);
+                    setCurrentIndex(0);
+                    setGameStats({
+                      totalAttempts: 0,
+                      correctAnswers: 0,
+                      incorrectAnswers: 0,
+                      accuracyByDifficulty: {
+                        easy: 0,
+                        medium: 0,
+                        hard: 0
+                      }
+                    });
+                  }}
+                  className="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transform hover:scale-105 transition-all duration-200"
+                >
+                  Change Difficulty
+                </button>
+              </div>
             </div>
           </div>
         </div>
