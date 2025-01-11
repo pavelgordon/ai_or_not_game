@@ -212,22 +212,24 @@ export default function Game() {
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-white to-gray-100 dark:from-gray-900 dark:to-gray-800 p-4">
-      <div className="fixed top-4 right-4 text-xl font-bold">
-        Score: {score}/{gameStats.totalAttempts}
+      <div className="fixed top-0 left-0 right-0 flex justify-between items-center p-4 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
+        <div>
+          <div className="text-xl font-bold">
+            Level: {currentDifficulty.charAt(0).toUpperCase() + currentDifficulty.slice(1)}
+          </div>
+          <div className="text-sm text-gray-600 dark:text-gray-400">
+            Progress: {progress.easy}/3 → {progress.medium}/3 → {progress.hard}/3
+          </div>
+        </div>
+        <div className="text-xl font-bold">
+          Score: {score}/{gameStats.totalAttempts}
+        </div>
       </div>
       
-      <div className="fixed top-4 left-4 text-xl font-bold">
-        Level: {currentDifficulty.charAt(0).toUpperCase() + currentDifficulty.slice(1)}
-      </div>
-
-      <div className="fixed top-14 left-4 text-md text-gray-600 dark:text-gray-400">
-        Progress: {progress.easy}/3 → {progress.medium}/3 → {progress.hard}/3
-      </div>
-      
-      <div className={`transform transition-all duration-500 ${isAnimating ? 'scale-95 opacity-50' : 'scale-100 opacity-100'}`}>
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-8 max-w-2xl w-full mx-auto">
+      <div className={`transform transition-all duration-500 ${isAnimating ? 'scale-95 opacity-50' : 'scale-100 opacity-100'} mt-20`}>
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-4 sm:p-8 max-w-2xl w-full mx-auto">
           <div className="min-h-[200px] flex items-center justify-center mb-8">
-            <p className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed">
+            <p className="text-base sm:text-lg text-gray-700 dark:text-gray-300 leading-relaxed">
               {currentText.content}
             </p>
           </div>
@@ -237,16 +239,16 @@ export default function Game() {
               {feedback}
             </div>
           ) : (
-            <div className="flex gap-4 justify-center">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button
                 onClick={() => handleGuess(true)}
-                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transform hover:scale-105 transition-all duration-200"
+                className="w-full sm:w-auto px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transform hover:scale-105 transition-all duration-200"
               >
                 AI Generated
               </button>
               <button
                 onClick={() => handleGuess(false)}
-                className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transform hover:scale-105 transition-all duration-200"
+                className="w-full sm:w-auto px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transform hover:scale-105 transition-all duration-200"
               >
                 Human Written
               </button>
