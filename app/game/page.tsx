@@ -44,11 +44,20 @@ export default function Game() {
   const currentLevelTexts = texts.filter(text => text.difficulty === currentDifficulty);
   const currentText = currentLevelTexts[currentIndex];
 
+  // Get the number of texts per difficulty
+  const textsPerDifficulty = {
+    easy: texts.filter(t => t.difficulty === 'easy').length,
+    medium: texts.filter(t => t.difficulty === 'medium').length,
+    hard: texts.filter(t => t.difficulty === 'hard').length,
+  };
+
   // Calculate progress
   const progress = {
-    easy: (currentDifficulty === 'easy' ? currentIndex + 1 : 3),
-    medium: (currentDifficulty === 'medium' ? currentIndex + 1 : currentDifficulty === 'hard' ? 3 : 0),
-    hard: (currentDifficulty === 'hard' ? currentIndex + 1 : 0),
+    easy: (currentDifficulty === 'easy' ? Math.min(currentIndex + 1, textsPerDifficulty.easy) : 
+           currentDifficulty === 'medium' || currentDifficulty === 'hard' ? textsPerDifficulty.easy : 0),
+    medium: (currentDifficulty === 'medium' ? Math.min(currentIndex + 1, textsPerDifficulty.medium) : 
+             currentDifficulty === 'hard' ? textsPerDifficulty.medium : 0),
+    hard: (currentDifficulty === 'hard' ? Math.min(currentIndex + 1, textsPerDifficulty.hard) : 0),
   };
 
   const updateStats = (isCorrect: boolean) => {
@@ -318,7 +327,7 @@ export default function Game() {
             Level: {currentDifficulty.charAt(0).toUpperCase() + currentDifficulty.slice(1)}
           </div>
           <div className="text-sm text-gray-600 dark:text-gray-400">
-            Progress: {progress.easy}/3 → {progress.medium}/3 → {progress.hard}/3
+            Progress: {progress.easy}/{textsPerDifficulty.easy} → {progress.medium}/{textsPerDifficulty.medium} → {progress.hard}/{textsPerDifficulty.hard}
           </div>
         </div>
         <div className="text-xl font-bold">
