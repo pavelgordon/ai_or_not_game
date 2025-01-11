@@ -43,15 +43,32 @@ export default function Game() {
 
   // Get 3 random questions for the current difficulty
   const getRandomQuestions = (difficulty: Difficulty) => {
-    const availableQuestions = texts
-      .filter(t => t.difficulty === difficulty && !usedQuestionIds.has(t.id));
+    const questionsForDifficulty = texts.filter(t => t.difficulty === difficulty);
+    
+    // If we don't have enough questions for this difficulty level at all
+    if (questionsForDifficulty.length < 3) {
+      console.warn(`Not enough questions for ${difficulty} difficulty. Only ${questionsForDifficulty.length} available.`);
+      return questionsForDifficulty; // Return all available questions
+    }
+
+    const availableQuestions = questionsForDifficulty.filter(t => !usedQuestionIds.has(t.id));
     
     // If we don't have enough unused questions, reset the used questions
     if (availableQuestions.length < 3) {
       setUsedQuestionIds(new Set());
-      return getRandomQuestions(difficulty);
+      // Use questions from the full pool after reset
+      const shuffled = [...questionsForDifficulty].sort(() => Math.random() - 0.5);
+      const selected = shuffled.slice(0, 3);
+      
+      // Mark these questions as used
+      const newUsedIds = new Set<number>();
+      selected.forEach(q => newUsedIds.add(q.id));
+      setUsedQuestionIds(newUsedIds);
+      
+      return selected;
     }
 
+    // We have enough unused questions, proceed normally
     const shuffled = [...availableQuestions].sort(() => Math.random() - 0.5);
     const selected = shuffled.slice(0, 3);
     
