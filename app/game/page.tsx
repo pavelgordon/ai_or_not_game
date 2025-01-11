@@ -5,6 +5,17 @@ import { texts } from '../data/texts';
 
 type Difficulty = 'easy' | 'medium' | 'hard';
 
+interface GameStats {
+  totalAttempts: number;
+  correctAnswers: number;
+  incorrectAnswers: number;
+  accuracyByDifficulty: {
+    easy: number;
+    medium: number;
+    hard: number;
+  };
+}
+
 export default function Game() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [score, setScore] = useState(0);
@@ -12,6 +23,17 @@ export default function Game() {
   const [isAnimating, setIsAnimating] = useState(false);
   const [currentDifficulty, setCurrentDifficulty] = useState<Difficulty>('easy');
   const [gameStarted, setGameStarted] = useState(false);
+  const [gameEnded, setGameEnded] = useState(false);
+  const [gameStats, setGameStats] = useState<GameStats>({
+    totalAttempts: 0,
+    correctAnswers: 0,
+    incorrectAnswers: 0,
+    accuracyByDifficulty: {
+      easy: 0,
+      medium: 0,
+      hard: 0
+    }
+  });
 
   // Filter texts by current difficulty
   const currentLevelTexts = texts.filter(text => text.difficulty === currentDifficulty);
@@ -24,10 +46,34 @@ export default function Game() {
     hard: (currentDifficulty === 'hard' ? currentIndex + 1 : 0),
   };
 
+  const updateStats = (isCorrect: boolean) => {
+    setGameStats(prev => {
+      const attemptsForDifficulty = texts
+        .filter(t => t.difficulty === currentDifficulty)
+        .length;
+      
+      const correctForDifficulty = isCorrect ? 
+        (prev.accuracyByDifficulty[currentDifficulty] * attemptsForDifficulty + 1) :
+        (prev.accuracyByDifficulty[currentDifficulty] * attemptsForDifficulty);
+
+      return {
+        totalAttempts: prev.totalAttempts + 1,
+        correctAnswers: prev.correctAnswers + (isCorrect ? 1 : 0),
+        incorrectAnswers: prev.incorrectAnswers + (isCorrect ? 0 : 1),
+        accuracyByDifficulty: {
+          ...prev.accuracyByDifficulty,
+          [currentDifficulty]: correctForDifficulty / attemptsForDifficulty
+        }
+      };
+    });
+  };
+
   const handleGuess = (guessIsAI: boolean) => {
     const isCorrect = guessIsAI === currentText.isAI;
     setFeedback(isCorrect ? "Correct! 🎉" : "Oops, wrong answer! 😅");
     if (isCorrect) setScore(score + 1);
+    
+    updateStats(isCorrect);
     
     setIsAnimating(true);
     setTimeout(() => {
@@ -41,7 +87,7 @@ export default function Game() {
         setCurrentIndex(0);
       } else {
         // Game completed
-        setGameStarted(false);
+        setGameEnded(true);
       }
       setFeedback(null);
       setIsAnimating(false);
@@ -53,7 +99,86 @@ export default function Game() {
     setCurrentIndex(0);
     setScore(0);
     setGameStarted(true);
+    setGameEnded(false);
+    setGameStats({
+      totalAttempts: 0,
+      correctAnswers: 0,
+      incorrectAnswers: 0,
+      accuracyByDifficulty: {
+        easy: 0,
+        medium: 0,
+        hard: 0
+      }
+    });
   };
+
+  if (gameEnded) {
+    const overallAccuracy = (gameStats.correctAnswers / gameStats.totalAttempts) * 100;
+    
+    return (
+      <main className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-white to-gray-100 dark:from-gray-900 dark:to-gray-800 p-4">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-8 max-w-2xl w-full mx-auto">
+          <h1 className="text-3xl font-bold text-center mb-8">Game Summary</h1>
+          
+          <div className="space-y-6">
+            <div className="text-center text-2xl font-bold mb-4">
+              Final Score: {score}/{gameStats.totalAttempts}
+            </div>
+            
+            <div className="space-y-4">
+              <div className="text-lg">
+                Overall Accuracy: {overallAccuracy.toFixed(1)}%
+              </div>
+              
+              <div className="space-y-2">
+                <h3 className="font-semibold">Accuracy by Difficulty:</h3>
+                <div className="pl-4">
+                  <div>Easy: {(gameStats.accuracyByDifficulty.easy * 100).toFixed(1)}%</div>
+                  <div>Medium: {(gameStats.accuracyByDifficulty.medium * 100).toFixed(1)}%</div>
+                  <div>Hard: {(gameStats.accuracyByDifficulty.hard * 100).toFixed(1)}%</div>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <div>Total Correct: {gameStats.correctAnswers}</div>
+                <div>Total Incorrect: {gameStats.incorrectAnswers}</div>
+              </div>
+            </div>
+            
+            <div className="flex gap-4 justify-center mt-8">
+              <button
+                onClick={() => startGame('easy')}
+                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transform hover:scale-105 transition-all duration-200"
+              >
+                Play Again
+              </button>
+              <button
+                onClick={() => {
+                  setGameStarted(false);
+                  setGameEnded(false);
+                  setScore(0);
+                  setCurrentIndex(0);
+                  setGameStats({
+                    totalAttempts: 0,
+                    correctAnswers: 0,
+                    incorrectAnswers: 0,
+                    accuracyByDifficulty: {
+                      easy: 0,
+                      medium: 0,
+                      hard: 0
+                    }
+                  });
+                }}
+                className="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transform hover:scale-105 transition-all duration-200"
+              >
+                Change Difficulty
+              </button>
+            </div>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   if (!gameStarted) {
     return (
@@ -88,7 +213,7 @@ export default function Game() {
   return (
     <main className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-white to-gray-100 dark:from-gray-900 dark:to-gray-800 p-4">
       <div className="fixed top-4 right-4 text-xl font-bold">
-        Score: {score}
+        Score: {score}/{gameStats.totalAttempts}
       </div>
       
       <div className="fixed top-4 left-4 text-xl font-bold">
